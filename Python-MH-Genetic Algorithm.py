@@ -78,10 +78,16 @@ def breeding(population, fitness):
                     offspring.iloc[i,0] = population.iloc[initial, 0]
                     for j in range(1, offspring.shape[1] - 1):
                         offspring.iloc[i,j] = population.iloc[final, j] 
-                if (point_crossover == population.shape[1] - 2):
+                elif (point_crossover == population.shape[1] - 2):
                     offspring.iloc[i,-2] = population.iloc[initial, -2]
                     for j in range(offspring.shape[1] - 3, 0, -1):
                         offspring.iloc[i,j] = population.iloc[final, j]
+                else:
+                    for j in range(0, offspring.shape[1] - 1):
+                        if(j < point_crossover):
+                            offspring.iloc[i,j] = population.iloc[initial, j]
+                        else:
+                            offspring.iloc[i,j] = population.iloc[final, j]
         else:
             offspring.iloc[i,0] = (population.iloc[i1, 0] + population.iloc[i2, 0])/2
         offspring.iloc[i,-1] = target_function(offspring.iloc[i,0:offspring.shape[1]-1])
