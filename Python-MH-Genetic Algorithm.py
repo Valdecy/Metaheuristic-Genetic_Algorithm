@@ -14,6 +14,7 @@
 # Required Libraries
 import pandas as pd
 import numpy  as np
+import math
 import random
 import os
 
@@ -52,10 +53,16 @@ def roulette_wheel(fitness):
     return ix
 
 # Function: Offspring
-def breeding(population, fitness):
+def breeding(population, fitness, elite = 0):
     offspring = population.copy(deep = True)
+    
+    if (elite > 0):
+        preserve = population.nsmallest(elite, "Fitness").copy(deep = True)
+        for i in range(0, elite):
+            for j in range(0, offspring.shape[1]):
+                offspring.iloc[i,j] = preserve.iloc[i,j]
 
-    for i in range (0, offspring.shape[0]):
+    for i in range (elite, offspring.shape[0]):
         i1 = roulette_wheel(fitness)
         i2 = roulette_wheel(fitness)
         while i1 == i2:
@@ -125,32 +132,32 @@ def mutation(offspring, mutation_rate = 0.1, min_values = [-5,-5], max_values = 
     return offspring
 
 # GA Function
-def genetic_algorithm(population_size = 5, mutation_rate = 0.1, min_values = [-5,-5], max_values = [5,5], generations = 50):    
+def genetic_algorithm(population_size = 5, mutation_rate = 0.1, elite = 0, min_values = [-5,-5], max_values = [5,5], generations = 50):    
     count = 0
     population = initial_population(population_size = population_size, min_values = min_values, max_values = max_values)
     fitness = fitness_function(population)    
-    elite = population.iloc[population['Fitness'].idxmin(),:].copy(deep = True)
+    elite_ind = population.iloc[population['Fitness'].idxmin(),:].copy(deep = True)
     
     while (count <= generations):
         
-        print("Iteration = ", count, " f(x) = ", elite[-1])
+        print("Iteration = ", count, " f(x) = ", elite_ind [-1])
         
-        offspring = breeding(population, fitness)
+        offspring = breeding(population, fitness, elite = elite)
         population = mutation(offspring, mutation_rate = mutation_rate, min_values = min_values, max_values = max_values)
         fitness = fitness_function(population)
-        if(elite[-1] > population.iloc[population['Fitness'].idxmin(),:][-1]):
-            elite = population.iloc[population['Fitness'].idxmin(),:].copy(deep = True) 
+        if(elite_ind [-1] > population.iloc[population['Fitness'].idxmin(),:][-1]):
+            elite_ind  = population.iloc[population['Fitness'].idxmin(),:].copy(deep = True) 
         
         count = count + 1 
         
-    print(elite)    
-    return elite
+    print(elite_ind )    
+    return elite_ind 
 
 ######################## Part 1 - Usage ####################################
 
-# Function to be Minimized. Solution ->  f(x1, x2) = -1.0316; x1 = 0.0898, x2 = -0.7126 or x1 = -0.0898, x2 = 0.7126
+# Function to be Minimized (Six Hump Camel Back). Solution ->  f(x1, x2) = -1.0316; x1 = 0.0898, x2 = -0.7126 or x1 = -0.0898, x2 = 0.7126
 def target_function (variables_values = [0, 0]):
     func_value = 4*variables_values[0]**2 - 2.1*variables_values[0]**4 + (1/3)*variables_values[0]**6 + variables_values[0]*variables_values[1] - 4*variables_values[1]**2 + 4*variables_values[1]**4
     return func_value
 
-ga = genetic_algorithm(population_size = 500, mutation_rate = 0.1, min_values = [-5,-5], max_values = [5,5], generations = 100)
+ga = genetic_algorithm(population_size = 400, mutation_rate = 0.1, elite = 1, min_values = [-5,-5], max_values = [5,5], generations = 100)
