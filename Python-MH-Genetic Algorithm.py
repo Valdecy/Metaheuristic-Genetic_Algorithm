@@ -140,7 +140,7 @@ def genetic_algorithm(population_size = 5, mutation_rate = 0.1, elite = 0, min_v
     
     while (count <= generations):
         
-        print("Iteration = ", count, " f(x) = ", elite_ind [-1])
+        print("Generation = ", count, " f(x) = ", elite_ind [-1])
         
         offspring = breeding(population, fitness, elite = elite)
         population = mutation(offspring, mutation_rate = mutation_rate, min_values = min_values, max_values = max_values)
