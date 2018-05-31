@@ -108,13 +108,13 @@ def mutation(offspring, mutation_rate = 0.1, min_values = [-5,-5], max_values = 
                 if (choose_mutation < 0.9):
                     choose_operation = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
                     if(choose_operation < 0.5):
-                        offspring.iloc[i,j] = offspring.iloc[i,j] + random.uniform(0, 1)*(max_values[j]- offspring.iloc[i,j])
+                        offspring.iloc[i,j] = offspring.iloc[i,j] + random.uniform(0, 1)*(max_values[j]- offspring.iloc[i,j])*0.05
                         if (offspring.iloc[i,j] > max_values[j]):
                             offspring.iloc[i,j] = max_values[j]
                         elif (offspring.iloc[i,j] < min_values[j]):
                             offspring.iloc[i,j] = min_values[j] 
                     else:
-                        offspring.iloc[i,j] = offspring.iloc[i,j] - random.uniform(0, 1)*(offspring.iloc[i,j] - min_values[j])
+                        offspring.iloc[i,j] = offspring.iloc[i,j] - random.uniform(0, 1)*(offspring.iloc[i,j] - min_values[j])*0.05
                         if (offspring.iloc[i,j] > max_values[j]):
                             offspring.iloc[i,j] = max_values[j]
                         elif (offspring.iloc[i,j] < min_values[j]):
