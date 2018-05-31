@@ -65,7 +65,7 @@ def breeding(population, fitness):
             if (probability >= 0.5):
                 choose_mean = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
                 for j in range(0, offspring.shape[1] - 1):
-                    if (choose_mean < 0.5):
+                    if (choose_mean < 0.9):
                         offspring.iloc[i,j] = (population.iloc[i1, j] + population.iloc[i2, j])/2
                     else:
                         rand = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
@@ -105,7 +105,7 @@ def mutation(offspring, mutation_rate = 0.1, min_values = [-5,-5], max_values = 
             probability = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
             if (probability < mutation_rate):
                 choose_mutation = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
-                if (choose_mutation < 0.5):
+                if (choose_mutation < 0.9):
                     choose_operation = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
                     if(choose_operation < 0.5):
                         offspring.iloc[i,j] = offspring.iloc[i,j] + random.uniform(0, 1)*(max_values[j]- offspring.iloc[i,j])
