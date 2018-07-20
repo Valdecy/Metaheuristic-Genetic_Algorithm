@@ -53,86 +53,54 @@ def roulette_wheel(fitness):
     return ix
 
 # Function: Offspring
-def breeding(population, fitness, elite = 0):
+def breeding(population, fitness, min_values = [-5,-5], max_values = [5,5], mu = 1, elite = 0):
     offspring = population.copy(deep = True)
-    
+    b_offspring = 0
     if (elite > 0):
         preserve = population.nsmallest(elite, "Fitness").copy(deep = True)
         for i in range(0, elite):
             for j in range(0, offspring.shape[1]):
                 offspring.iloc[i,j] = preserve.iloc[i,j]
-
     for i in range (elite, offspring.shape[0]):
-        i1 = roulette_wheel(fitness)
-        i2 = roulette_wheel(fitness)
-        while i1 == i2:
-            i2 = roulette_wheel(fitness)
-        if (offspring.shape[1] - 1 > 1):
-            probability = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
-            if (probability >= 0.5):
-                choose_mean = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
-                for j in range(0, offspring.shape[1] - 1):
-                    if (choose_mean < 0.95):
-                        offspring.iloc[i,j] = (population.iloc[i1, j] + population.iloc[i2, j])/2
-                    else:
-                        rand = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
-                        offspring.iloc[i,j] = rand*population.iloc[i1, j] + (1 - rand)*population.iloc[i2, j]
-            else:
-                choose_initial  = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
-                point_crossover = np.random.randint(offspring.shape[1] - 1, size = 1)[0]
-                if (choose_initial < 0.5):
-                    initial = i1
-                    final   = i2
-                else:
-                    initial = i2
-                    final   = i1
-                if (point_crossover == 0):
-                    offspring.iloc[i,0] = population.iloc[initial, 0]
-                    for j in range(1, offspring.shape[1] - 1):
-                        offspring.iloc[i,j] = population.iloc[final, j] 
-                elif (point_crossover == population.shape[1] - 2):
-                    offspring.iloc[i,-2] = population.iloc[initial, -2]
-                    for j in range(offspring.shape[1] - 3, 0, -1):
-                        offspring.iloc[i,j] = population.iloc[final, j]
-                else:
-                    for j in range(0, offspring.shape[1] - 1):
-                        if(j < point_crossover):
-                            offspring.iloc[i,j] = population.iloc[initial, j]
-                        else:
-                            offspring.iloc[i,j] = population.iloc[final, j]
-        else:
-            offspring.iloc[i,0] = (population.iloc[i1, 0] + population.iloc[i2, 0])/2
-        offspring.iloc[i,-1] = target_function(offspring.iloc[i,0:offspring.shape[1]-1])
+        parent_1, parent_2 = roulette_wheel(fitness), roulette_wheel(fitness)
+        while parent_1 == parent_2:
+            parent_2 = random.sample(range(0, len(population) - 1), 1)[0]
+        for j in range(0, offspring.shape[1] - 1):
+            rand = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
+            rand_b = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)                                
+            if (rand <= 0.5):
+                b_offspring = 2*(rand_b)
+                b_offspring = b_offspring**(1/(mu + 1))
+            elif (rand > 0.5):  
+                b_offspring = 1/(2*(1 - rand_b))
+                b_offspring = b_offspring**(1/(mu + 1))       
+            offspring.iloc[i,j] = np.clip(((1 + b_offspring)*population.iloc[parent_1, j] + (1 - b_offspring)*population.iloc[parent_2, j])/2, min_values[j], max_values[j])           
+            if(i < population.shape[0] - 1):   
+                offspring.iloc[i+1,j] = np.clip(((1 - b_offspring)*population.iloc[parent_1, j] + (1 + b_offspring)*population.iloc[parent_2, j])/2, min_values[j], max_values[j]) 
+        offspring.iloc[i,-1] = target_function(offspring.iloc[i,0:offspring.shape[1]-1]) 
     return offspring
 
 # Function: Mutation
-def mutation(offspring, mutation_rate = 0.1, min_values = [-5,-5], max_values = [5,5]):
+def mutation(offspring, mutation_rate = 0.1, eta = 1, min_values = [-5,-5], max_values = [5,5]):
+    d_mutation = 0            
     for i in range (0, offspring.shape[0]):
         for j in range(0, offspring.shape[1] - 1):
             probability = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
             if (probability < mutation_rate):
-                choose_mutation = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
-                if (choose_mutation < 0.95):
-                    choose_operation = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
-                    if(choose_operation < 0.5):
-                        offspring.iloc[i,j] = offspring.iloc[i,j] + random.uniform(0, 1)*(max_values[j]- offspring.iloc[i,j])
-                        if (offspring.iloc[i,j] > max_values[j]):
-                            offspring.iloc[i,j] = max_values[j]
-                        elif (offspring.iloc[i,j] < min_values[j]):
-                            offspring.iloc[i,j] = min_values[j] 
-                    else:
-                        offspring.iloc[i,j] = offspring.iloc[i,j] - random.uniform(0, 1)*(offspring.iloc[i,j] - min_values[j])
-                        if (offspring.iloc[i,j] > max_values[j]):
-                            offspring.iloc[i,j] = max_values[j]
-                        elif (offspring.iloc[i,j] < min_values[j]):
-                            offspring.iloc[i,j] = min_values[j]
-                else:
-                    offspring.iloc[i,j] = random.uniform(min_values[j], max_values[j])
-        offspring.iloc[i,-1] = target_function(offspring.iloc[i,0:offspring.shape[1]-1])
+                rand = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)
+                rand_d = int.from_bytes(os.urandom(8), byteorder = "big") / ((1 << 64) - 1)                                     
+                if (rand <= 0.5):
+                    d_mutation = 2*(rand_d)
+                    d_mutation = d_mutation**(1/(eta + 1)) - 1
+                elif (rand > 0.5):  
+                    d_mutation = 2*(1 - rand_d)
+                    d_mutation = 1 - d_mutation**(1/(eta + 1))                
+                offspring.iloc[i,j] = np.clip((offspring.iloc[i,j] + d_mutation), min_values[j], max_values[j])
+        offspring.iloc[i,-1] = target_function(offspring.iloc[i,0:offspring.shape[1]-1])                        
     return offspring
 
 # GA Function
-def genetic_algorithm(population_size = 5, mutation_rate = 0.1, elite = 0, min_values = [-5,-5], max_values = [5,5], generations = 50):    
+def genetic_algorithm(population_size = 5, mutation_rate = 0.1, elite = 0, min_values = [-5,-5], max_values = [5,5], eta = 1, mu = 1, generations = 50):    
     count = 0
     population = initial_population(population_size = population_size, min_values = min_values, max_values = max_values)
     fitness = fitness_function(population)    
@@ -142,8 +110,8 @@ def genetic_algorithm(population_size = 5, mutation_rate = 0.1, elite = 0, min_v
         
         print("Generation = ", count, " f(x) = ", elite_ind [-1])
         
-        offspring = breeding(population, fitness, elite = elite)
-        population = mutation(offspring, mutation_rate = mutation_rate, min_values = min_values, max_values = max_values)
+        offspring = breeding(population, fitness, min_values = min_values, max_values = max_values, mu = mu, elite = elite) 
+        population = mutation(offspring, mutation_rate = mutation_rate, eta = eta, min_values = min_values, max_values = max_values)
         fitness = fitness_function(population)
         if(elite_ind [-1] > population.iloc[population['Fitness'].idxmin(),:][-1]):
             elite_ind  = population.iloc[population['Fitness'].idxmin(),:].copy(deep = True) 
@@ -160,4 +128,4 @@ def target_function (variables_values = [0, 0]):
     func_value = 4*variables_values[0]**2 - 2.1*variables_values[0]**4 + (1/3)*variables_values[0]**6 + variables_values[0]*variables_values[1] - 4*variables_values[1]**2 + 4*variables_values[1]**4
     return func_value
 
-ga = genetic_algorithm(population_size = 400, mutation_rate = 0.1, elite = 1, min_values = [-5,-5], max_values = [5,5], generations = 100)
+ga = genetic_algorithm(population_size = 50, mutation_rate = 0.1, elite = 0, eta = 1, mu = 1, min_values = [-5,-5], max_values = [5,5], generations = 25)
