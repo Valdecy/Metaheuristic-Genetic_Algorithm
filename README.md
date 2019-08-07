@@ -1,5 +1,5 @@
 # Metaheuristic-Genetic_Algorithm
-Genetic Algorithm to Minimize Functions with Continuous Variables. Real Values Encoding.The function returns: 1) An array containing the used value(s) for the target function and the output of the target function f(x). For example, if the function f(x1, x2) is used, then the array would be [x1, x2, f(x1, x2)].  
+Genetic Algorithm to Minimize Functions with Continuous Variables. Real Values Encoding. The function returns: 1) An array containing the used value(s) for the target function and the output of the target function f(x). For example, if the function f(x1, x2) is used, then the array would be [x1, x2, f(x1, x2)].  
 
 * population_size = The population size. The Default Value is 5.
 
